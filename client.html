@@ -1,0 +1,175 @@
+<html>
+  <head>
+    <title>WebSocketTest</title>
+    <script>
+      var socket;
+      function pleaseDo() {
+        socket = new WebSocket("ws://"+location.hostname+":3400");
+        socket.onopen = function(evt){
+          alert("Socket has been opened!\n"+evt);
+          registerEvents();
+          //pin = prompt("Name, please");
+          //socket.send("Name:" + pin);
+        }
+        socket.onmessage = function(msg) {
+          var li = document.createElement('li');
+          li.appendChild(document.createTextNode(msg.data));
+          document.getElementById("messages").appendChild(li);
+        }
+        socket.onerror = function(evt) {
+          alert('error'+evt);
+        }
+        socket.onclose = function(evt) {
+          alert('close '+evt);
+          registerEvents(false);
+        }
+      }
+      function pleaseClose() {
+        if (socket == undefined) return;
+        registerEvents(false);
+        socket.close();
+        socket = undefined;
+      }
+      function registerEvents(unregister) {
+        var cb = document.addEventListener;
+        if (unregister == false) cb = document.removeEventListener;
+        var events = [ "touchstart", "touchmove", "touchend" ];
+        for (var i = 0 ; i < events.length ; i++)
+          cb.call(document, events[i], movereport, false);
+      }
+      var fingerCount = undefined;
+      // 1 finger
+      var mouselast = undefined;
+      var mousemoved = false;
+      var mousemovedbefore = false;
+      var mouselastclick = undefined;
+      var awaitingClickTimerId = undefined;
+      var clickLocked = false;
+      // 2 fingers
+      var fingerslastdistance = undefined;
+      var fingerslastcoords = undefined;
+      function movereport(evt) {
+        if (evt.target != document.body) return;
+        if (evt.type != "touchstart")
+          evt.preventDefault();
+        if (evt.touches) {
+          document.title = evt.type+' '+fingerCount+' -> '+evt.touches.length;
+          if (fingerCount == undefined && evt.touches.length > 0)
+            fingerCount = evt.touches.length;
+          else if (fingerCount > 0 && fingerCount != evt.touches.length)
+            return;
+          var coords = [0,0];
+          for (var i = 0 ; i < evt.touches.length ; i++) {
+            coords[0] += evt.touches[0].screenX;
+            coords[1] += evt.touches[0].screenY;
+          }
+        }
+        var msg;
+        if (fingerCount == 1) {
+          if (evt.type == "touchstart") {
+            mouselast = coords;
+            mousemoved = false;
+            if (awaitingClickTimerId != undefined) {
+              clearTimeout(awaitingClickTimerId);
+              awaitingClickTimerId = undefined;
+              var dist = Math.sqrt(Math.pow(mouselastclick[0]-coords[0],2)+Math.pow(mouselastclick[1]-coords[1],2));
+              if (dist <= 15) { // click-lock
+                clickLocked = true;
+                msg = {type: "down", button: "left"};
+                msg = JSON.stringify(msg);
+                socket.send(msg);
+              } else {
+                // Send the cancelled click right away
+                msg = {type: "click", button: "left"};
+                msg = JSON.stringify(msg);
+                socket.send(msg);
+                // And that's all
+              }
+            }
+          } else if (evt.type == "touchend") {
+            document.title = evt.type;
+            if (!mousemoved) {
+              if (clickLocked) {
+                msg = {type: "up", button: "left"};
+                msg = JSON.stringify(msg);
+                socket.send(msg);
+                if (!mousemovedbefore) { // doubleclick
+                  msg = {type: "click", button: "left"};
+                  msg = JSON.stringify(msg);
+                  socket.send(msg);
+                }
+                clickLocked = false;
+              } else {
+                fingerCount = undefined;
+                document.title = 'resetting';
+                console.log("104");
+                awaitingClickTimerId = setTimeout(function() { return function() {
+                  awaitingClickTimerId = undefined;
+                  msg = {type: "click", button: "left"};
+                  msg = JSON.stringify(msg);
+                  socket.send(msg);
+                };}(), 200);
+              }
+            } else {
+              fingerCount = undefined;
+              document.title = 'resetting';
+              console.log("115");
+            }
+            mouselastclick = mouselast;
+            mouselast = undefined;
+            mousemovedbefore = mousemoved;
+            mousemoved = false;
+          } else if (evt.type == "touchmove" && mouselast != undefined) {
+            msg = {type: "move", relx: coords[0]-mouselast[0], rely: coords[1]-mouselast[1]};
+            msg = JSON.stringify(msg);
+            socket.send(msg);
+            mouselast = coords;
+            mousemovedbefore = mousemoved;
+            mousemoved = true;
+          }
+        } else if (fingerCount == 2) {
+            var dist = Math.sqrt(Math.pow(evt.touches[0].screenX-evt.touches[1].screenX,2)+Math.pow(evt.touches[0].screenY-evt.touches[1].screenY,2));
+            fingerslastdistance = dist;
+            fingerslastcoords = coords;
+          if (evt.type == "touchstart") {
+            } else if (evt.type == "touchmove") {
+            var dist;
+            // Horizontal scrolling
+            dist = fingerslastcoords[0]-coords[0];
+            if (Math.abs(dist) >= 15) {
+              msg = {type: "scroll", axis: "x", amount: dist>0?Math.floor(dist/15):Math.ceil(dist/15)};
+              msg = JSON.stringify(msg);
+              socket.send(msg);
+            }
+            // Vertical scrolling
+            dist = fingerslastcoords[1]-coords[1];
+            if (Math.abs(dist) >= 15) {
+              msg = {type: "scroll", axis: "y", amount: dist>0?-Math.floor(dist/15):-Math.ceil(dist/15)};
+              msg = JSON.stringify(msg);
+              socket.send(msg);
+            }
+            // Zooming
+            dist = Math.sqrt(Math.pow(evt.touches[0].screenX-evt.touches[1].screenX,2)+Math.pow(evt.touches[0].screenY-evt.touches[1].screenY,2));
+            if (Math.abs(fingerslastdistance-dist) > 20) {
+              msg = {type: "zoom", amount: dist<fingerslastdistance?Math.floor((fingerslastdistance-dist)/20):Math.ceil((fingerslastdistance-dist)/20)};
+              msg = JSON.stringify(msg);
+              socket.send(msg);
+            }
+            fingerslastdistance = dist;
+            fingerslastcoords = coords;
+          } else if (evt.type == "touchend") {
+            fingerCount = undefined;
+            fingerslastdistance = undefined;
+            fingerslastcoords = undefined;
+          }
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <button onclick="javascript:pleaseDo();">Connect</button>
+    <button onclick="javascript:pleaseClose();">Close</button>
+    <ul id="messages">
+    </ul>
+  </body>
+</html>

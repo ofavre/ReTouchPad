@@ -1,0 +1,77 @@
+move
+click L&R
+d&d
+wheel
+keyboard
+alt+tab
+
+1 finger =
+ - move (down,move,[*],up)
+ - click L (down,[short],up)
+   double click L possible
+ - lock click (down,[short],up,[short],down, [continue w/ move:]move*,up)
+   click L also unlocks click
+2 fingers =
+ - click R (down[2],[short],up[2])
+   double click R possible
+ - 2D scroll (down[2],move,[*],up[2])
+ - zoom (down[2],pinch,[*],up[2])
+3 fingers =
+ - keyboard (down[3],[short],up[3])
+ - alt+[shift]+tab (down[2],{down[1],move(←/→)[1],[*],up[1]},[*],up[2])
+ - additional window gestures ?
+
+Pay attention to progressive appearance of fingers!
+
+
+Finger count detection:
+  [nothing],[short],get_the_count
+  look at the confidence of the path of any gesture in recognition
+Click detection (possibly of a few fingers among all present ones):
+  down[x],[short],up[same:x]
+Move detection:
+  Some direction
+    using the barycenter of some fingers
+  Pinch
+    using distance of a pair of some fingers
+  Ignored
+    small move in confusing situations
+  Normal
+    big, allowed move
+Role detection:
+  According to the recognized moves of some fingers
+
+
+Each gesture:
+ - listens to pre-synthetized events
+ - follows a state machine with probabilities
+ - calculates its confidence, and its completeness status
+ - posts actions to be taken with the current confidence
+ - declares precedence and anihilation
+The system:
+ - pre-synthetizes events
+ - decide the max delay of posted actions (before they'll have to be taken)
+ - decide to invalidate past actions
+ - takes immediate actions if no alternative is comming / if all alternatives have gone
+ - takes deferred actions if max delay has been met
+
+
+Gesture:
+  Move (1 finger)
+    down,move,[*],up
+  Click L (1 finger)
+    down,[short],up
+  Double click L (1 finger)
+    down,[short],up,[short],down[close],[short],up
+  Lock click L (1 finger)
+    down,[short],up,[short],down[close],[long before up],move*,up,[max precedence for unlock phase],down,[short],up
+  Click R (2 fingers)
+    down[2],[short],up[2]
+  2D scroll (2 fingers)
+    down[2],move,[*],up[2]
+  Zoom (2 fingers)
+    down[2],pinch,[*],up[2]
+  Keyboard (3 fingers)
+    down[3],[short],up[3]
+  Alt+[shift]+Tab (2 fingers + 1 moving finger)
+    down[2],{down[1],move(←/→)[1],[*],up[1]},[*],up[2]
