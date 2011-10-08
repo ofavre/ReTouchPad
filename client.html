@@ -1,15 +1,44 @@
 <html>
   <head>
     <title>WebSocketTest</title>
+    <style language="text/css">
+      .overlay {
+        position: fixed;
+        width: 0px;
+        height: 0px;
+        overflow: show;
+      }
+      .overlay-outer {
+        position: relative;
+        width: 0px;
+        height: 0px;
+        overflow: show;
+      }
+      .overlay-inner {
+        position: relative;
+        width: 50px;
+        height: 50px;
+        left: -25px;
+        top: -25px;
+        border: solid 2px black;
+      }
+      .overlay-finger {
+        background-color: red;
+      }
+      .overlay-barycenter {
+        background-color: blue;
+      }
+    </style>
     <script>
-      var socket;
+      var socket = {
+        send: function(msg) {console.log(msg)},
+        close: function() {}
+      };
       function pleaseDo() {
         socket = new WebSocket("ws://"+location.hostname+":3400");
         socket.onopen = function(evt){
           alert("Socket has been opened!\n"+evt);
           registerEvents();
-          //pin = prompt("Name, please");
-          //socket.send("Name:" + pin);
         }
         socket.onmessage = function(msg) {
           var li = document.createElement('li');
@@ -37,138 +66,860 @@
         for (var i = 0 ; i < events.length ; i++)
           cb.call(document, events[i], movereport, false);
       }
-      var fingerCount = undefined;
-      // 1 finger
-      var mouselast = undefined;
-      var mousemoved = false;
-      var mousemovedbefore = false;
-      var mouselastclick = undefined;
-      var awaitingClickTimerId = undefined;
-      var clickLocked = false;
-      // 2 fingers
-      var fingerslastdistance = undefined;
-      var fingerslastcoords = undefined;
       function movereport(evt) {
         if (evt.target != document.body) return;
         if (evt.type != "touchstart")
           evt.preventDefault();
-        if (evt.touches) {
-          document.title = evt.type+' '+fingerCount+' -> '+evt.touches.length;
-          if (fingerCount == undefined && evt.touches.length > 0)
-            fingerCount = evt.touches.length;
-          else if (fingerCount > 0 && fingerCount != evt.touches.length)
-            return;
-          var coords = [0,0];
-          for (var i = 0 ; i < evt.touches.length ; i++) {
-            coords[0] += evt.touches[0].screenX;
-            coords[1] += evt.touches[0].screenY;
-          }
+        if (!evt.touches) return;
+        var s = evt.type+' '+evt.touches.length;
+        for (var i = 0 ; i < evt.touches.length ; i++) {
+          s += ' ' + evt.touches[i].identifier + '>' + evt.touches[i].screenX + '-' + evt.touches[i].screenY;
         }
-        var msg;
-        if (fingerCount == 1) {
-          if (evt.type == "touchstart") {
-            mouselast = coords;
-            mousemoved = false;
-            if (awaitingClickTimerId != undefined) {
-              clearTimeout(awaitingClickTimerId);
-              awaitingClickTimerId = undefined;
-              var dist = Math.sqrt(Math.pow(mouselastclick[0]-coords[0],2)+Math.pow(mouselastclick[1]-coords[1],2));
-              if (dist <= 15) { // click-lock
-                clickLocked = true;
-                msg = {type: "down", button: "left"};
-                msg = JSON.stringify(msg);
-                socket.send(msg);
-              } else {
-                // Send the cancelled click right away
-                msg = {type: "click", button: "left"};
-                msg = JSON.stringify(msg);
-                socket.send(msg);
-                // And that's all
-              }
-            }
-          } else if (evt.type == "touchend") {
-            document.title = evt.type;
-            if (!mousemoved) {
-              if (clickLocked) {
-                msg = {type: "up", button: "left"};
-                msg = JSON.stringify(msg);
-                socket.send(msg);
-                if (!mousemovedbefore) { // doubleclick
-                  msg = {type: "click", button: "left"};
-                  msg = JSON.stringify(msg);
-                  socket.send(msg);
-                }
-                clickLocked = false;
-              } else {
-                fingerCount = undefined;
-                document.title = 'resetting';
-                console.log("104");
-                awaitingClickTimerId = setTimeout(function() { return function() {
-                  awaitingClickTimerId = undefined;
-                  msg = {type: "click", button: "left"};
-                  msg = JSON.stringify(msg);
-                  socket.send(msg);
-                };}(), 200);
-              }
-            } else {
-              fingerCount = undefined;
-              document.title = 'resetting';
-              console.log("115");
-            }
-            mouselastclick = mouselast;
-            mouselast = undefined;
-            mousemovedbefore = mousemoved;
-            mousemoved = false;
-          } else if (evt.type == "touchmove" && mouselast != undefined) {
-            msg = {type: "move", relx: coords[0]-mouselast[0], rely: coords[1]-mouselast[1]};
-            msg = JSON.stringify(msg);
-            socket.send(msg);
-            mouselast = coords;
-            mousemovedbefore = mousemoved;
-            mousemoved = true;
-          }
-        } else if (fingerCount == 2) {
-            var dist = Math.sqrt(Math.pow(evt.touches[0].screenX-evt.touches[1].screenX,2)+Math.pow(evt.touches[0].screenY-evt.touches[1].screenY,2));
-            fingerslastdistance = dist;
-            fingerslastcoords = coords;
-          if (evt.type == "touchstart") {
-            } else if (evt.type == "touchmove") {
-            var dist;
-            // Horizontal scrolling
-            dist = fingerslastcoords[0]-coords[0];
-            if (Math.abs(dist) >= 15) {
-              msg = {type: "scroll", axis: "x", amount: dist>0?Math.floor(dist/15):Math.ceil(dist/15)};
-              msg = JSON.stringify(msg);
-              socket.send(msg);
-            }
-            // Vertical scrolling
-            dist = fingerslastcoords[1]-coords[1];
-            if (Math.abs(dist) >= 15) {
-              msg = {type: "scroll", axis: "y", amount: dist>0?-Math.floor(dist/15):-Math.ceil(dist/15)};
-              msg = JSON.stringify(msg);
-              socket.send(msg);
-            }
-            // Zooming
-            dist = Math.sqrt(Math.pow(evt.touches[0].screenX-evt.touches[1].screenX,2)+Math.pow(evt.touches[0].screenY-evt.touches[1].screenY,2));
-            if (Math.abs(fingerslastdistance-dist) > 20) {
-              msg = {type: "zoom", amount: dist<fingerslastdistance?Math.floor((fingerslastdistance-dist)/20):Math.ceil((fingerslastdistance-dist)/20)};
-              msg = JSON.stringify(msg);
-              socket.send(msg);
-            }
-            fingerslastdistance = dist;
-            fingerslastcoords = coords;
-          } else if (evt.type == "touchend") {
-            fingerCount = undefined;
-            fingerslastdistance = undefined;
-            fingerslastcoords = undefined;
-          }
-        }
+        document.title = s;
+        Touchpad.EventDispatcher.receiveEvent(evt);
       }
-    </script>
+
+      var Touchpad = new function() {
+        this.Touch = function(touch) {
+          this.id = touch.identifier;
+          this.x  = touch.screenX;
+          this.y  = touch.screenY;
+        };
+        this.EventDispatcher = new function() {
+          this.lastEvent = null;
+          this.lastEventTime = 0;
+          this.touches = { count: 0 };
+          this.deltaTouches = {};
+          this.barycenters = new function() {
+            this._list = {}; // ",id1,id2," for keys
+            this.list = function() {
+              var rtn = [];
+              for (var kyz in this._list) {
+                var e = this._list[kyz];
+                var keys = kyz.split(',');
+                keys.shift();
+                keys.pop();
+                if (keys.length < 2) continue;
+                keys = keys.map(function(v){return parseInt(v);}); // function wrapping necessary otherwise NaN is returned except for first value...
+                if (e.ids == undefined) e.ids = keys;
+                rtn.push(e);
+              }
+              return rtn;
+            };
+            this._key = function() {
+              var a = [];
+              for (var i = 0 ; i < arguments.length ; i++)
+                a.push(arguments[i]);
+              return ","+a.sort().join(",")+",";
+            };
+            this.deleteWithId = function(id) {
+              id = this._key(id);
+              for (var key in this._list)
+                if (key.indexOf(id) >= 0) {
+                  delete this._list[key];
+                }
+            };
+            this.deleteWithTouch = function(touch) {
+              return this.deleteWithId(touch.id != undefined ? touch.id : touch.identifier);
+            };
+            this.updateWithDeltaTouches = function(deltaTouches) {
+              for (var id in deltaTouches) {
+                var deltaTouch = deltaTouches[id];
+                id = this._key(id);
+                for (var keys in this._list) {
+                  if (keys.indexOf(id) == -1) continue;
+                  var length = keys.replace(/[^,]*/g,'').length - 1;
+                  var o = this._list[keys];
+                  o.dx += deltaTouch.x / length;
+                  o.dy += deltaTouch.y / length;
+                  o.x += deltaTouch.x / length;
+                  o.y += deltaTouch.y / length;
+                  o.dx2 += deltaTouch.x2 / length;
+                  o.dy2 += deltaTouch.y2 / length;
+                  o.x2 += deltaTouch.x2 / length;
+                  o.y2 += deltaTouch.y2 / length;
+                  var dvarX = o.varX;
+                  var dvarY = o.varY;
+                  var dvarXY = o.varXY;
+                  o.varX = o.x2 - Math.pow(o.x,2);
+                  o.varY = o.y2 - Math.pow(o.y,2);
+                  o.varXY = o.varX + o.varY;
+                  o.dvarX = dvarX - o.varX;
+                  o.dvarY = dvarY - o.varY;
+                  o.dvarXY = dvarXY - o.varXY;
+                  var dstdX = o.stdX;
+                  var dstdY = o.stdY;
+                  var dstdXY = o.stdXY;
+                  o.stdX = Math.sqrt(o.varX);
+                  o.stdY = Math.sqrt(o.varY);
+                  o.stdXY = Math.sqrt(o.varXY);
+                  o.dstdX = dstdX - o.stdX;
+                  o.dstdY = dstdY - o.stdY;
+                  o.dstdXY = dstdXY - o.stdXY;
+                }
+              }
+            };
+            this.newTouch = function(touch) {
+              var oldKeys = [];
+              for (var keys in this._list)
+                oldKeys.push(keys);
+              for (var i = 0 ; i < oldKeys.length ; i++) {
+                var oldkeys = oldKeys[i];
+                var length = oldkeys.replace(/[^,]*/g,'').length - 1;
+                if (length >= 5) continue; // don't get past p=5 for this O(n^p) algorithm
+                var keys = oldkeys+touch.id+","; // no ",," should be present, thus not using this._key()
+                var o = {
+                  x: (this._list[oldkeys].x * length + touch.x) / (length+1),
+                  y: (this._list[oldkeys].y * length + touch.y) / (length+1),
+                  x2: (this._list[oldkeys].x2 * length + Math.pow(touch.x,2)) / (length+1),
+                  y2: (this._list[oldkeys].y2 * length + Math.pow(touch.y,2)) / (length+1),
+                  dx: 0, dy: 0, dx2: 0, dy2: 0,
+                  dvarX: 0, dvarY: 0, dvarXY: 0,
+                  dstdX: 0, dstdY: 0, dstdXY: 0
+                };
+                o.varX = o.x2 - Math.pow(o.x,2);
+                o.varY = o.y2 - Math.pow(o.y,2);
+                o.varXY = o.varX + o.varY;
+                o.stdX = Math.sqrt(o.varX);
+                o.stdY = Math.sqrt(o.varY);
+                o.stdXY = Math.sqrt(o.varXY);
+                this._list[keys] = o;
+              }
+              this._list[this._key(touch.id)] = {
+                x: touch.x,
+                y: touch.y,
+                x2: Math.pow(touch.x,2),
+                y2: Math.pow(touch.y,2),
+                varX: 0, varY: 0,
+                stdX: 0, stdY: 0,
+                dx: 0, dy: 0, dx2: 0, dy2: 0,
+                dvarX: 0, dvarY: 0, dvarXY: 0,
+                dstdX: 0, dstdY: 0, dstdXY: 0
+              };
+            };
+          };
+          this.receiveEvent = function(evt) {
+            this.lastEvent = evt;
+            this.lastEventTime = new Date().getTime();
+            this.deltaTouches = {};
+            if (evt.type == "touchstart") {
+              for (var i = 0 ; i < evt.changedTouches.length ; i++) {
+                var t = new Touchpad.Touch(evt.changedTouches[i]);
+                this.touches[evt.changedTouches[i].identifier] = t;
+                this.barycenters.newTouch(t);
+              }
+              this.touches.count += evt.changedTouches.length;
+            } else if (evt.type == "touchmove") {
+              for (var i = 0 ; i < evt.changedTouches.length ; i++) {
+                var t = evt.changedTouches[i];
+                var dt = new Touchpad.Touch(t);
+                dt.x2 = Math.pow(dt.x,2);
+                dt.y2 = Math.pow(dt.y,2);
+                dt.x2 -= Math.pow(this.touches[t.identifier].x,2);
+                dt.y2 -= Math.pow(this.touches[t.identifier].y,2);
+                dt.x -= this.touches[t.identifier].x;
+                dt.y -= this.touches[t.identifier].y;
+                this.deltaTouches[t.identifier] = dt;
+                this.touches[t.identifier] = new Touchpad.Touch(t);
+              }
+              this.barycenters.updateWithDeltaTouches(this.deltaTouches);
+            } else if (evt.type == "touchend") {
+              for (var i = 0 ; i < evt.changedTouches.length ; i++) {
+                var id = evt.changedTouches[i].identifier;
+                delete this.touches[id];
+                this.barycenters.deleteWithId(id);
+              }
+              this.touches.count -= evt.changedTouches.length;
+            }
+            socket.send(JSON.stringify({type:"log",value:{
+              type: evt.type,
+              changedTouches: (function(ct){
+                rtn = [];
+                for (var i = 0 ; i < ct.length ; i++)
+                  rtn.push((function(t){
+                    return {identifier: t.identifier, screenX: t.screenX, screenY: t.screenY};
+                  })(ct[i]));
+                return rtn;
+              })(evt.changedTouches),
+              fingerCount: this.touches.count
+            }}));
+            OverlayManager.clear();
+            for (var id in this.touches)
+              if (id != "count")
+                OverlayManager.add(this.touches[id].x, this.touches[id].y, "overlay-finger", "");
+            var list = this.barycenters.list();
+            for (var i = 0 ; i < list.length ; i++)
+              OverlayManager.add(list[i].x, list[i].y, "overlay-barycenter", list[i].ids.length+":"+Math.round(list[i].stdXY));
+            Touchpad.GestureManager.notify(this);
+            // Reset delta properties of barycenters
+            var propsToZeroOut = ["dx", "dy", "dx2", "dy2", "dvarX", "dvarY", "dvarXY", "dstdX", "dstdY", "dstdXY"];
+            for (var id in this.barycenters._list)
+              if (id != "count")
+                for (var i = 0 ; i != propsToZeroOut.length ; i++)
+                  this.barycenters._list[id][propsToZeroOut[i]] = 0;
+          };
+        };
+        this.GestureManager = new function() {
+          this.gestures = [];
+          this.registerGesture = function(gesture) {
+            this.gestures.push(gesture);
+            gesture.reset();
+          };
+          this.notify = function(dispatcher) {
+            for (var i = 0 ; i < this.gestures.length ; i++)
+              this.gestures[i].notify(dispatcher);
+            if (dispatcher.touches.count == 0)
+              for (var i = 0 ; i < this.gestures.length ; i++)
+                this.gestures[i].reset();
+          };
+        };
+        this.TouchEventTypes = {
+          DOWN: function(cb, totalFingerCount) {
+            this.type = "DOWN";
+            this.finished = false;
+            this.cb = cb ? cb : function(){return true;};
+            this.totalFingerCount = totalFingerCount;
+            this.wouldTrigger = function(dispatcher) {
+              return dispatcher.lastEvent.type == "touchstart" && dispatcher.touches.count == this.totalFingerCount;
+            };
+            this.wouldCancel = function(dispatcher) {
+              return dispatcher.lastEvent.type == "touchstart" && dispatcher.touches.count > this.totalFingerCount;
+            };
+            this.notify = function(dispatcher) {
+              if (this.finished) return true;
+              if (this.wouldTrigger(dispatcher)) {
+                rtn = this.cb();
+                if (rtn) this.finished = true;
+                return rtn;
+              } else if (this.wouldCancel(dispatcher))
+                this.finished = true;
+              return false;
+            };
+            this.reset = function() {
+              this.finished = false;
+            };
+            this.onStateEnter = function() {this.finished = false;};
+            this.onStateStay  = function() {};
+            this.onStateLeave = function() {};
+          },
+          UP:   function(cb, totalFingerCount) {
+            this.type = "UP";
+            this.finished = false;
+            this.cb = cb ? cb : function(){return true;};
+            this.totalFingerCount = totalFingerCount;
+            this.wouldTrigger = function(dispatcher) {
+              return dispatcher.lastEvent.type == "touchend" && dispatcher.touches.count == this.totalFingerCount;
+            };
+            this.wouldCancel = function(dispatcher) {
+              return dispatcher.lastEvent.type == "touchend" && dispatcher.touches.count < this.totalFingerCount;
+            };
+            this.notify = function(dispatcher) {
+              if (this.finished) return true;
+              if (this.wouldTrigger(dispatcher)) {
+                rtn = this.cb();
+                if (rtn) this.finished = true;
+                return rtn;
+              } else if (this.wouldCancel(dispatcher))
+                this.finished = true;
+              return false;
+            };
+            this.reset = function() {
+              this.finished = false;
+            };
+            this.onStateEnter = function() {this.finished = false;};
+            this.onStateStay  = function() {};
+            this.onStateLeave = function() {};
+          },
+          MOVE: function(cb, totalFingerCount) {
+            this.type = "MOVE";
+            this.finished = false;
+            this.cb = cb ? cb : function(){return true;};
+            this.totalFingerCount = totalFingerCount;
+            this.wouldTrigger = function(dispatcher) {
+              return dispatcher.lastEvent.type == "touchmove" && dispatcher.touches.count == this.totalFingerCount;
+            };
+            this.wouldCancel = function(dispatcher) {
+              return dispatcher.lastEvent.type == "touchmove" && dispatcher.touches.count != this.totalFingerCount;
+            };
+            this.notify = function(dispatcher) {
+              if (this.finished) return true;
+              if (this.wouldTrigger(dispatcher)) {
+                rtn = this.cb();
+                if (rtn) this.finished = true;
+                return rtn;
+              } else if (this.wouldCancel(dispatcher))
+                this.finished = true;
+              return false;
+            };
+            this.reset = function() {
+              this.finished = false;
+            };
+            this.onStateEnter = function() {this.finished = false;};
+            this.onStateStay  = function() {};
+            this.onStateLeave = function() {};
+          },
+          TIME: function(cb, timeout, onlyAcceptedEvents) {
+            this.type = "TIME";
+            this.cb = cb ? cb : function(){return true;};
+            this.timeout = timeout;
+            this.timer = undefined;
+            this.cancel = function() {
+              if (this.timer) {
+                clearTimeout(this.timer);
+                this.timer = undefined;
+              }
+            };
+            this.onlyAcceptedEvents = onlyAcceptedEvents;
+            for (var i = 0 ; i < this.onlyAcceptedEvents ; i++)
+              this.onlyAcceptedEvents[i].cb = (function(that){return function() {that.cancel();};})(this);
+            this.notify = function(dispatcher) {
+              if (!this.timer) return true;
+              for (var i = 0 ; i < this.onlyAcceptedEvents ; i++) {
+                if (this.onlyAcceptedEvents[i].wouldCancel(dispatcher)) {
+                  this.onlyAcceptedEvents.splice(i,1);
+                  i--;
+                  continue;
+                } else if (!this.onlyAcceptedEvents[i].wouldTrigger(dispatcher)) {
+                  return true;
+                }
+              }
+            };
+            this.reset = function() {
+              this.cancel();
+            };
+            this.onStateEnter = function() {
+              this.timer = setTimeout(this.cb, this.timeout);
+            };
+            this.onStateStay  = function() {};
+            this.onStateLeave = function() {
+              this.cancel();
+            };
+          }
+        };
+        this.Gesture = function(name, setupCb) {
+          this.name = name;
+          this.states = {};
+          this.startState = null;
+          this.currentState = null;
+          this.notify = function(dispatcher) {
+            if (this.currentState) {
+              var s = this.states[this.currentState];
+              for (var i = 0 ; i < s.links.length ; i++) {
+                var e = s.links[i];
+                if (e.event.notify(dispatcher)) {
+//                  console.log(this.name+" "+this.currentState+" -> "+e.toState);
+                  this.transitionTo(e.toState);
+                  break;
+                }
+              }
+            }
+          };
+          this.transitionTo = function(name) {
+            this.fromState = this.currentState;
+            this.toState = (name && name in this.states) ? name : null;
+            if (this.currentState)
+              this.states[this.currentState].leave();
+            this.currentState = this.toState;
+            if (this.currentState)
+              this.states[this.currentState].enter();
+          };
+          this.reset = function() {
+            this.transitionTo(null);
+            for (var state in this.states) this.states[state].reset();
+            this.transitionTo(this.startState);
+          };
+          var setup = new (function(gesture) {
+            function State(gesture,name) {
+              this.gesture = gesture;
+              this.name = name;
+              this.links = [];
+              this.forbidEvents = function(touchEvents) {
+                for (var i = 0 ; i < touchEvents.length ; i++)
+                  this.links.push({event: touchEvents[i], toState: null});
+              };
+              this.addLink = function(touchEvent, toStateName) {
+                this.links.push({event: touchEvent, toState: toStateName});
+              };
+              this.onEnter = undefined;
+              this.onStay = undefined;
+              this.onLeave = undefined;
+              this.onReset = undefined;
+              this.enter = function() {
+                for (var i = 0 ; i < this.links.length ; i++)
+                  this.links[i].event.onStateEnter();
+                if (this.onEnter)
+                  this.onEnter();
+              };
+              this.stay = function() {
+                for (var i = 0 ; i < this.links.length ; i++)
+                  this.links[i].event.onStateStay();
+                if (this.onStay)
+                  this.onStay();
+              };
+              this.leave = function() {
+                if (this.onLeave)
+                  this.onLeave();
+                for (var i = 0 ; i < this.links.length ; i++)
+                  this.links[i].event.onStateLeave();
+              };
+              this.reset = function() {
+                for (var i = 0 ; i < this.links.length ; i++)
+                  this.links[i].event.reset();
+                if (this.onReset) return this.onReset();
+              };
+            };
+            this.gesture = gesture;
+            this.setStartState = function(name) {
+              this.gesture.startState = name;
+            };
+            this.addState = function(name) {
+              if (this.gesture.states[name] != undefined)
+                throw "State already defined!";
+              return this.gesture.states[name] = new State(this.gesture,name);
+            };
+            this.setup = function(setupCb) {
+              setupCb.call(this);
+              Touchpad.GestureManager.registerGesture(this.gesture);
+            };
+          })(this);
+          setup.setup(setupCb);
+        };
+      };
+
+      var OverlayManager = new function(){
+        this.clear = function() {
+          var elmt;
+          while ((elmt = document.getElementsByClassName("overlay")[0]) != undefined)
+            elmt.parentNode.removeChild(elmt);
+        };
+        this.add = function(x,y,classname,text) {
+          var d = document.createElement("div");
+          d.className = "overlay";
+          d.style.left = x+'px';
+          d.style.top = y+'px';
+          var o = document.createElement("div");
+          o.className = "overlay-outer";
+          d.appendChild(o);
+          var i = document.createElement("div");
+          i.className = "overlay-inner "+classname;
+          i.appendChild(document.createTextNode(text));
+          o.appendChild(i);
+          document.body.appendChild(d);
+        };
+      };
+
+      var gestureMove = new Touchpad.Gesture("move", function(){
+        this.setStartState("start");
+        var start = this.addState("start");
+        var moving = this.addState("moving");
+        start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "moving");
+        start.forbidEvents([
+          new Touchpad.TouchEventTypes.DOWN(undefined, 2)
+        ]);
+        moving.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 1), "moving");
+        moving.forbidEvents([
+          new Touchpad.TouchEventTypes.MOVE(undefined, 2),
+          new Touchpad.TouchEventTypes.UP(undefined, 0),
+          new Touchpad.TouchEventTypes.DOWN(undefined, 2)
+        ]);
+        moving.onEnter = function() {
+          for (id in Touchpad.EventDispatcher.deltaTouches) {
+            socket.send(JSON.stringify({
+              type: "move",
+              relx: Touchpad.EventDispatcher.deltaTouches[id].x,
+              rely: Touchpad.EventDispatcher.deltaTouches[id].y,
+            }));
+          }
+        };
+      });
+      var gestureClickL = new Touchpad.Gesture("clickL", function(){
+        this.setStartState("start");
+        var start = this.addState("start");
+        var down = this.addState("down");
+        var up = this.addState("up");
+        start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down");
+        down.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up");
+        down.forbidEvents([
+          new Touchpad.TouchEventTypes.TIME(function(){down.gesture.transitionTo(null);}, 200),
+          new Touchpad.TouchEventTypes.MOVE(undefined, 1),
+          new Touchpad.TouchEventTypes.DOWN(undefined, 2)
+        ]);
+        down.onLeave = function() {
+          if (this.gesture.toState == "up") {
+            socket.send(JSON.stringify({
+              type: "click",
+              button: "left"
+            }));
+          }
+        };
+      });
+      var gestureClickR = new Touchpad.Gesture("clickR", function(){
+        this.setStartState("start");
+        var start = this.addState("start");
+        var down1 = this.addState("down1");
+        var down2 = this.addState("down2");
+        var up1 = this.addState("up1");
+        var up0 = this.addState("up0");
+        start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down1");
+        start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
+        down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
+        down1.forbidEvents([
+          new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100),
+          new Touchpad.TouchEventTypes.MOVE(undefined, 1),
+          new Touchpad.TouchEventTypes.UP(undefined, 0)
+        ]);
+        down2.addLink(new Touchpad.TouchEventTypes.UP(undefined, 1), "up1");
+        down2.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up0");
+        down2.forbidEvents([
+          new Touchpad.TouchEventTypes.TIME(function(){down2.gesture.transitionTo(null);}, 200),
+          new Touchpad.TouchEventTypes.MOVE(undefined, 1),
+          new Touchpad.TouchEventTypes.DOWN(undefined, 3)
+        ]);
+        up1.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up0");
+        up1.forbidEvents([
+          new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100),
+          new Touchpad.TouchEventTypes.MOVE(undefined, 1),
+          new Touchpad.TouchEventTypes.DOWN(undefined, 2)
+        ]);
+        up0.onEnter = function() {
+          socket.send(JSON.stringify({
+            type: "click",
+            button: "right"
+          }));
+        };
+      });
+      var gesture2DScroll = new Touchpad.Gesture("scroll", function(){
+        this.onReset = function() {
+          this.barycenter = undefined;
+        };
+        this.setStartState("start");
+        var start = this.addState("start");
+        var down1 = this.addState("down1");
+        var down2 = this.addState("down2");
+        var down3 = this.addState("down3");
+        var down4 = this.addState("down4");
+        var moving = this.addState("moving");
+        start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down1");
+        start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
+        start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 3), "down3");
+        start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 4), "down4");
+        down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
+        down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 3), "down3");
+        down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 4), "down4");
+        down1.forbidEvents([
+          new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100),
+          new Touchpad.TouchEventTypes.MOVE(undefined, 1),
+          new Touchpad.TouchEventTypes.UP(undefined, 0)
+        ]);
+        down2.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 2), "moving");
+        down2.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 3), "down3");
+        down2.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 4), "down4");
+        down2.forbidEvents([
+          new Touchpad.TouchEventTypes.UP(undefined, 1),
+          new Touchpad.TouchEventTypes.UP(undefined, 0)
+        ]);
+        down3.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 3), "moving");
+        down3.addLink(new Touchpad.TouchEventTypes.UP(undefined, 2), "down2");
+        down3.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 4), "down4");
+        down3.forbidEvents([
+          new Touchpad.TouchEventTypes.UP(undefined, 1),
+          new Touchpad.TouchEventTypes.UP(undefined, 0)
+        ]);
+        down4.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 4), "moving");
+        down4.addLink(new Touchpad.TouchEventTypes.UP(undefined, 3), "down3");
+        down4.addLink(new Touchpad.TouchEventTypes.UP(undefined, 2), "down2");
+        down4.forbidEvents([
+          new Touchpad.TouchEventTypes.DOWN(undefined, 5),
+          new Touchpad.TouchEventTypes.UP(undefined, 1),
+          new Touchpad.TouchEventTypes.UP(undefined, 0)
+        ]);
+        down2.onEnter = down3.onEnter = down4.onEnter = function() {
+          this.gesture.accummulation = {dx: 0, dy: 0};
+          this.gesture.barycenter = ",";
+          for (id in Touchpad.EventDispatcher.touches)
+            if (id != "count")
+              this.gesture.barycenter += id + ",";
+            console.log("barycenter key = "+this.gesture.barycenter);
+        };
+        moving.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 2), "moving");
+        moving.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 3), "moving");
+        moving.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 4), "moving");
+        moving.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 3), "down3");
+        moving.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 4), "down4");
+        moving.addLink(new Touchpad.TouchEventTypes.UP(undefined, 3), "down3");
+        moving.addLink(new Touchpad.TouchEventTypes.UP(undefined, 2), "down2");
+        moving.forbidEvents([
+          new Touchpad.TouchEventTypes.UP(undefined, 1),
+          new Touchpad.TouchEventTypes.UP(undefined, 0)
+        ]);
+        moving.onEnter = function() {
+          var type = undefined;
+          var step = 0;
+          switch (Touchpad.EventDispatcher.touches.count) {
+            case 2: type = "scroll"; step = 20; break;
+            case 3: type = "pagescroll"; step = 30; break;
+            case 4: type = "desktopchange"; step = 60; break;
+          }
+          if (type == undefined) {
+            this.gesture.transitionTo(null);
+            return;
+          }
+          var b = Touchpad.EventDispatcher.barycenters._list[this.gesture.barycenter];
+          this.gesture.accummulation.dx += b.dx;
+          this.gesture.accummulation.dy += b.dy;
+          function intTo0(v) { return v >= 0 ? Math.floor(v) : Math.ceil(v); }
+          var dx = intTo0(this.gesture.accummulation.dx / step);
+          var dy = intTo0(this.gesture.accummulation.dy / step);
+          if (dx != 0) {
+            this.gesture.accummulation.dx -= dx * step;
+            socket.send(JSON.stringify({
+              type: type,
+              axis: "x",
+              amount: dx
+            }));
+          }
+          if (dy != 0) {
+            this.gesture.accummulation.dy -= dy * step;
+            socket.send(JSON.stringify({
+              type: type,
+              axis: "y",
+              amount: dy
+            }));
+          }
+          if (type == "desktopchange" && (dx != 0 || dy != 0))
+            this.gesture.transitionTo(null);
+        };
+      });
+      var gestureZoom = new Touchpad.Gesture("zoom", function(){
+        this.onReset = function() {
+          this.barycenter = undefined;
+        };
+        this.setStartState("start");
+        var start = this.addState("start");
+        var down1 = this.addState("down1");
+        var down2 = this.addState("down2");
+        var moving = this.addState("moving");
+        start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down1");
+        start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
+        down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
+        down1.forbidEvents([
+          new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100),
+          new Touchpad.TouchEventTypes.DOWN(undefined, 3),
+          new Touchpad.TouchEventTypes.MOVE(undefined, 1),
+          new Touchpad.TouchEventTypes.UP(undefined, 0)
+        ]);
+        down2.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 2), "moving");
+        down2.forbidEvents([
+          new Touchpad.TouchEventTypes.DOWN(undefined, 3),
+          new Touchpad.TouchEventTypes.UP(undefined, 1),
+          new Touchpad.TouchEventTypes.UP(undefined, 0)
+        ]);
+        down2.onEnter = function() {
+          this.gesture.accummulation = {dstdXY: 0};
+          this.gesture.barycenter = ",";
+          for (id in Touchpad.EventDispatcher.touches)
+            if (id != "count")
+              this.gesture.barycenter += id + ",";
+            console.log("barycenter key = "+this.gesture.barycenter);
+        };
+        moving.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 2), "moving");
+        moving.forbidEvents([
+          new Touchpad.TouchEventTypes.DOWN(undefined, 3),
+          new Touchpad.TouchEventTypes.UP(undefined, 1),
+          new Touchpad.TouchEventTypes.UP(undefined, 0)
+        ]);
+        moving.onEnter = function() {
+          var b = Touchpad.EventDispatcher.barycenters._list[this.gesture.barycenter];
+          this.gesture.accummulation.dstdXY += b.dstdXY;
+          function intTo0(v) { return v >= 0 ? Math.floor(v) : Math.ceil(v); }
+          var dstdXY = intTo0(this.gesture.accummulation.dstdXY / 30);
+          if (dstdXY != 0) {
+            this.gesture.accummulation.dstdXY -= dstdXY * 30;
+            socket.send(JSON.stringify({
+              type: "zoom",
+              amount: dstdXY
+            }));
+          }
+        };
+      });
+
+      function FakeTouch(id, x, y) {
+        this.identifier = id;
+        this.screenX = x;
+        this.screenY = y;
+      }
+      function playFakeEvents(fakeevents, offset) {
+        var i = 0;
+        if (offset != undefined) {
+          var i = offset;
+          if (i >= fakeevents.length) return;
+          var evt = fakeevents[i];
+          Touchpad.EventDispatcher.receiveEvent(evt);
+          i++;
+        }
+        if (i >= fakeevents.length) return;
+        var evt = fakeevents[i];
+        setTimeout((function(fakeevents, offset){ return function() {
+          playFakeEvents(fakeevents, offset);
+        }; })(fakeevents, i), evt.delay);
+      }
+      function testMove() {
+        playFakeEvents([{
+          delay: 500,
+          type: "touchstart",
+          changedTouches: [new FakeTouch(1, 100, 100)]
+        },{
+          delay: 20,
+          type: "touchmove",
+          changedTouches: [new FakeTouch(1, 110, 100)]
+        },{
+          delay: 20,
+          type: "touchmove",
+          changedTouches: [new FakeTouch(1, 120, 100)]
+        },{
+          delay: 200,
+          type: "touchend",
+          changedTouches: [new FakeTouch(1, 120, 100)]
+        }]);
+      }
+      function testMoveFailed() {
+        playFakeEvents([{
+          delay: 500,
+          type: "touchstart",
+          changedTouches: [new FakeTouch(1, 100, 100)]
+        },{
+          delay: 100,
+          type: "touchmove",
+          changedTouches: [new FakeTouch(1, 110, 100)]
+        },{
+          delay: 200,
+          type: "touchstart",
+          changedTouches: [new FakeTouch(2, 200,200)]
+        },{
+          delay: 100,
+          type: "touchmove",
+          changedTouches: [new FakeTouch(2, 200, 210)]
+        },{
+          delay: 200,
+          type: "touchend",
+          changedTouches: [new FakeTouch(2, 200, 210)]
+        },{
+          delay: 200,
+          type: "touchmove",
+          changedTouches: [new FakeTouch(1, 120, 100)]
+        },{
+          delay: 200,
+          type: "touchend",
+          changedTouches: [new FakeTouch(1, 120, 100)]
+        }]);
+      }
+      function testClick() {
+        playFakeEvents([{
+          delay: 500,
+          type: "touchstart",
+          changedTouches: [new FakeTouch(1, 100, 100)]
+        },{
+          delay: 150,
+          type: "touchend",
+          changedTouches: [new FakeTouch(1, 100, 100)]
+        }]);
+      }
+      function testClickTooLong() {
+        playFakeEvents([{
+          delay: 500,
+          type: "touchstart",
+          changedTouches: [new FakeTouch(1, 100, 100)]
+        },{
+          delay: 500,
+          type: "touchend",
+          changedTouches: [new FakeTouch(1, 100, 100)]
+        }]);
+      }
+      function testClickR() {
+        playFakeEvents([{
+          delay: 500,
+          type: "touchstart",
+          changedTouches: [new FakeTouch(1, 100, 100)]
+        },{
+          delay: 50,
+          type: "touchstart",
+          changedTouches: [new FakeTouch(2, 200, 200)]
+        },{
+          delay: 150,
+          type: "touchend",
+          changedTouches: [new FakeTouch(2, 200, 210)]
+        },{
+          delay: 50,
+          type: "touchend",
+          changedTouches: [new FakeTouch(1, 120, 100)]
+        }]);
+      }
+      function test2DScroll() {
+        playFakeEvents([{
+          delay: 500,
+          type: "touchstart",
+          changedTouches: [new FakeTouch(1, 100, 100), new FakeTouch(2, 200, 200)]
+        },{
+          delay: 20,
+          type: "touchmove",
+          changedTouches: [new FakeTouch(1, 120, 100), new FakeTouch(2, 220, 200)]
+        },{
+          delay: 20,
+          type: "touchmove",
+          changedTouches: [new FakeTouch(1, 120, 120), new FakeTouch(2, 220, 220)]
+        },{
+          delay: 20,
+          type: "touchmove",
+          changedTouches: [new FakeTouch(1, 100, 100), new FakeTouch(2, 200, 200)]
+        },{
+          delay: 50,
+          type: "touchend",
+          changedTouches: [new FakeTouch(1, 100, 100), new FakeTouch(2, 200, 200)]
+        }]);
+      }
+      function test2DScrollSteps() {
+        playFakeEvents([{
+          delay: 500,
+          type: "touchstart",
+          changedTouches: [new FakeTouch(1, 100, 100)]
+        },{
+          delay: 50,
+          type: "touchstart",
+          changedTouches: [new FakeTouch(2, 200, 200)]
+        },{
+          delay: 20,
+          type: "touchmove",
+          changedTouches: [new FakeTouch(1, 120, 100), new FakeTouch(2, 220, 200)]
+        },{
+          delay: 20,
+          type: "touchmove",
+          changedTouches: [new FakeTouch(1, 120, 120), new FakeTouch(2, 220, 220)]
+        },{
+          delay: 20,
+          type: "touchmove",
+          changedTouches: [new FakeTouch(1, 100, 100), new FakeTouch(2, 200, 200)]
+        },{
+          delay: 150,
+          type: "touchend",
+          changedTouches: [new FakeTouch(2, 200, 200)]
+        },{
+          delay: 50,
+          type: "touchend",
+          changedTouches: [new FakeTouch(1, 100, 100)]
+        }]);
+      }
+      </script>
   </head>
   <body>
     <button onclick="javascript:pleaseDo();">Connect</button>
     <button onclick="javascript:pleaseClose();">Close</button>
+    <button onclick="javascript:testMove();">Test MOVE</button>
+    <button onclick="javascript:testMoveFailed();">Test MOVE failed</button>
+    <button onclick="javascript:testClick();">Test CLICK</button>
+    <button onclick="javascript:testClickTooLong();">Test CLICK too long</button>
+    <button onclick="javascript:testClickR();">Test CLICK R</button>
+    <button onclick="javascript:test2DScroll();">Test Scroll</button>
+    <button onclick="javascript:test2DScrollSteps();">Test Scroll steps</button>
     <ul id="messages">
     </ul>
   </body>
