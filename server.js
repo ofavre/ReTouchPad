@@ -1,5 +1,5 @@
 var sys = require("sys");
-var ws = require("./node_modules/websocket-server");
+var ws = require("websocket-server");
 var exec = require("child_process").exec;
 
 function error(data){
@@ -13,7 +13,7 @@ function notice(data){
 }
 
 var server = ws.createServer();//{debug:true});
-server.listen(3400);
+server.listen(process.env.npm_package_config_ws_port);
 
 server.addListener("connection", function(connection){
   notice("connection");
@@ -73,40 +73,3 @@ server.addListener("connection", function(connection){
 function exec_cb(error, stdout, stderr) {
   //log("\nerror="+error+"\nstdout="+stdout+"\nstderr="+stderr);
 }
-
-  /*
-server.addListener("request", function(req, res){
-  res.writeHead(200, {"Content-Type": "text/plain"});
-  res.write("okay");
-  res.end();
-});
-
-server.addListener("client", function(conn){
-  log(conn._id + ": new connection");
-  conn.addListener("readyStateChange", function(readyState){
-    log("stateChanged: "+readyState);
-  });
-
-  conn.addListener("open", function(){
-    log(conn._id + ": onOpen");
-    server.clients.forEach(function(client){
-      client.write("New Connection: "+conn._id);
-    });
-  });
-
-  conn.addListener("close", function(){
-    var c = this;
-    log(c._id + ": onClose");
-    server.clients.forEach(function(client){
-      client.write("Connection Closed: "+c._id);
-    });
-  });
-
-  conn.addListener("message", function(message){
-    log(conn._id + ": "+JSON.stringify(message));
-
-    server.clients.forEach(function(client){
-      client.write(conn._id + ": "+message);
-    });
-  });
-});*/

@@ -24,9 +24,11 @@ You will need [Node.JS][nodejs-download], and `npm` to get the module `websocket
 
 2. Check if `npm` is provided with your version of Node.JS, otherwise [install it][npm-download].
 
-3. Install the module `websocket-server`:
+3. Install the package system-wide, or install the dependencies locally:
 
-        npm install websocket-server
+        npm install -g   # installs the package and its dependencies system-wide
+        # OR
+        npm install      # installs the dependencies locally
 
 
 
@@ -35,7 +37,11 @@ Usage
 
 Start the server on the computer to control:
 
-    node ws.js
+    npm start -g retouchpad   # requires a system-wide installation
+    # OR from the project folder
+    npm start
+    # Or equivalently
+    node server.js
 
 Direct your browser to the `client.html` file.
 You will have to make this file available somehow.
