@@ -18,7 +18,7 @@ The server then reads the orders and uses `xdotool` in order to execute them.
 Installing
 ----------
 
-You will need [Node.JS][nodejs-download], and `npm` to get the module `websocket-server`.
+You will need [Node.JS][nodejs-download], and `npm` to fetch the dependencies.
 
 1. [Install Node.JS for your OS][nodejs-install] or [download it][nodejs-download], or [build it from source][nodejs-build].
 
@@ -44,8 +44,7 @@ Start the server on the computer to control:
     npm start
     node server.js
 
-Direct your browser to the `client.html` file.
-You will have to make this file available somehow.
+On the controlling device, open http://the-controlled-computer:8080/.
 
 Click the “Connect” button.
 

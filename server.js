@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 var sys = require("sys");
 var ws = require("websocket-server");
+var connect = require("connect");
 var exec = require("child_process").exec;
 
 function error(data){
@@ -15,9 +16,17 @@ function notice(data){
 
 // Fix needed when not run through `npm start`
 process.env.npm_package_config_ws_port = process.env.npm_package_config_ws_port || 3400;
+process.env.npm_package_config_web_port = process.env.npm_package_config_web_port || 8080;
+
+// HTTP Web Server used to serve the static client files
+var webserver = connect()
+  .use(connect.static('www'))
+  .listen(process.env.npm_package_config_web_port);
+sys.log("Server ready to serve client files listening at port " + process.env.npm_package_config_web_port);
 
 var server = ws.createServer();//{debug:true});
 server.listen(process.env.npm_package_config_ws_port);
+sys.log("Server ready to execute WebSocket commands listening at port " + process.env.npm_package_config_ws_port);
 
 server.addListener("connection", function(connection){
   notice("connection");
