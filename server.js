@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var sys = require("sys");
 var ws = require("websocket-server");
 var exec = require("child_process").exec;
@@ -11,6 +12,9 @@ function log(data){
 function notice(data){
   sys.log("\033[0;33m"+data+"\033[0m");
 }
+
+// Fix needed when not run through `npm start`
+process.env.npm_package_config_ws_port = process.env.npm_package_config_ws_port || 3400;
 
 var server = ws.createServer();//{debug:true});
 server.listen(process.env.npm_package_config_ws_port);

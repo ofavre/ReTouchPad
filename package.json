@@ -37,5 +37,9 @@
 
     "config": {
         "ws-port": "3400"
+    },
+
+    "bin": {
+        "retouchpad": "./server.js"
     }
 }

@@ -37,10 +37,11 @@ Usage
 
 Start the server on the computer to control:
 
-    npm start -g retouchpad   # requires a system-wide installation
-    # OR from the project folder
+    # With a system-wide installation: either
+    retouchpad
+    npm start -g retouchpad
+    # With a local installation, from the project folder: either
     npm start
-    # Or equivalently
     node server.js
 
 Direct your browser to the `client.html` file.
