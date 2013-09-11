@@ -29,10 +29,10 @@
     "private": true,
     "main": "server",
     "engines": {
-        "node": ">=0.2.0-0"
+        "node": ">=0.4.0"
     },
     "dependencies": {
-        "websocket-server": "~1.4.04",
+        "socket.io": "~0.9.16",
         "connect": "*"
     },
 
