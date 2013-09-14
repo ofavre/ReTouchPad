@@ -29,35 +29,34 @@
         background-color: blue;
       }
     </style>
-    <script type="text/javascript" src="socket.io.js"></script>
     <script>
       var socket = {
         send: function(msg) {console.log(msg)},
         close: function() {}
       };
       function pleaseDo() {
-        socket = new io.connect("http://"+location.hostname+":3400");
-        socket.on('connect', function(evt){
+        socket = new WebSocket("ws://"+location.hostname+":3400");
+        socket.onopen = function(evt){
           alert("Socket has been opened!\n"+evt);
           registerEvents();
-        });
-        socket.on('message', function(msg) {
+        }
+        socket.onmessage = function(msg) {
           var li = document.createElement('li');
           li.appendChild(document.createTextNode(msg.data));
           document.getElementById("messages").appendChild(li);
-        });
-        socket.on('error', function(evt) {
+        }
+        socket.onerror = function(evt) {
           alert('error'+evt);
-        });
-        socket.on('disconnect', function(evt) {
+        }
+        socket.onclose = function(evt) {
           alert('close '+evt);
           registerEvents(false);
-        });
+        }
       }
       function pleaseClose() {
         if (socket == undefined) return;
         registerEvents(false);
-        socket.disconnect();
+        socket.close();
         socket = undefined;
       }
       function registerEvents(unregister) {
