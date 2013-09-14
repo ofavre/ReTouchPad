@@ -45,7 +45,7 @@
         "retouchpad": "./server.js"
     },
     "scripts": {
-        "prepublish": "./scripts/prepublish.sh",
-        "publish": "./scripts/postpublish.sh"
+        "publish": "./scripts/publish.sh",
+        "postpublish": "./scripts/postpublish.sh"
     }
 }
