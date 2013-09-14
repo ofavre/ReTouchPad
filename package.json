@@ -1,51 +1,47 @@
 {
-    "name": "retouchpad",
-    "version": "0.1.0--SNAPSHOT",
-    "description": "Turn your device's touchscreen into a remote computer touchpad",
-    "keywords": [
-        "touchpad",
-        "remote",
-        "control"
-    ],
-    "homepage": "https://github.com/ofavre/ReTouchPad",
-
-    "author": {
-        "name": "Olivier Favre",
-        "email": "of.olivier.favre@gmail.com",
-        "url": "https://github.com/ofavre"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/ofavre/ReTouchPad.git"
-    },
-    "bugs": "https://github.com/ofavre/ReTouchPad/issues",
-    "licenses": [
-        {
-            "type": "BSD",
-            "url": "https://raw.github.com/ofavre/ReTouchPad/master/LICENSE"
-        }
-    ],
-
-    "private": true,
-    "main": "server",
-    "engines": {
-        "node": ">=0.2.0-0"
-    },
-    "dependencies": {
-        "websocket-server": "~1.4.04",
-        "connect": "*"
-    },
-
-    "config": {
-        "web-port": "8080",
-        "ws-port": "3400"
-    },
-
-    "bin": {
-        "retouchpad": "./server.js"
-    },
-    "scripts": {
-        "publish": "./scripts/publish.sh",
-        "postpublish": "./scripts/postpublish.sh"
+  "name": "retouchpad",
+  "version": "0.1.0--SNAPSHOT",
+  "description": "Turn your device's touchscreen into a remote computer touchpad",
+  "keywords": [
+    "touchpad",
+    "remote",
+    "control"
+  ],
+  "homepage": "https://github.com/ofavre/ReTouchPad",
+  "author": {
+    "name": "Olivier Favre",
+    "email": "of.olivier.favre@gmail.com",
+    "url": "https://github.com/ofavre"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ofavre/ReTouchPad.git"
+  },
+  "bugs": "https://github.com/ofavre/ReTouchPad/issues",
+  "licenses": [
+    {
+      "type": "BSD",
+      "url": "https://raw.github.com/ofavre/ReTouchPad/master/LICENSE"
     }
+  ],
+  "private": true,
+  "main": "server",
+  "engines": {
+    "node": ">=0.2.0-0"
+  },
+  "dependencies": {
+    "websocket-server": "~1.4.04",
+    "connect": "*"
+  },
+  "config": {
+    "web-port": "8080",
+    "ws-port": "3400"
+  },
+  "bin": {
+    "retouchpad": "./server.js"
+  },
+  "scripts": {
+    "publish": "./scripts/publish.sh",
+    "postpublish": "./scripts/postpublish.sh"
+  }
 }
