@@ -26,9 +26,11 @@ You will need [Node.JS][nodejs-download], and `npm` to fetch the dependencies.
 
 3. Install the package system-wide, or install the dependencies locally:
 
-        npm install -g   # installs the package and its dependencies system-wide
-        # OR
-        npm install      # installs the dependencies locally
+    ```sh
+    npm install -g   # installs the package and its dependencies system-wide
+    # OR
+    npm install      # installs the dependencies locally
+    ```
 
 
 
@@ -37,14 +39,16 @@ Usage
 
 Start the server on the computer to control:
 
-    # With a system-wide installation: either
-    retouchpad
-    npm start -g retouchpad
-    # With a local installation, from the project folder: either
-    npm start
-    node server.js
+```sh
+# With a system-wide installation: either
+retouchpad
+npm start -g retouchpad
+# With a local installation, from the project folder: either
+npm start
+node server.js
+```
 
-On the controlling device, open http://the-controlled-computer:8080/.
+On the controlling device, open http://controlled.computer:8080/.
 
 Click the “Connect” button.
 
