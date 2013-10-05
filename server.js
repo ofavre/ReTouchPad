@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 var sys = require("sys");
-var ws = require("websocket-server");
+var ws = require("ws");
 var connect = require("connect");
 var exec = require("child_process").exec;
 
@@ -24,8 +24,7 @@ var webserver = connect()
   .listen(process.env.npm_package_config_web_port);
 sys.log("Server ready to serve client files listening at port " + process.env.npm_package_config_web_port);
 
-var server = ws.createServer();//{debug:true});
-server.listen(process.env.npm_package_config_ws_port);
+var server = new ws.Server({port: process.env.npm_package_config_ws_port });
 sys.log("Server ready to execute WebSocket commands listening at port " + process.env.npm_package_config_ws_port);
 
 server.addListener("connection", function(connection){

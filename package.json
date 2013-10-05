@@ -30,8 +30,8 @@
     "node": ">=0.2.0-0"
   },
   "dependencies": {
-    "websocket-server": "~1.4.04",
-    "connect": "*"
+    "connect": "*",
+    "ws": "~0.4.31"
   },
   "config": {
     "web-port": "8080",
