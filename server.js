@@ -16,9 +16,9 @@ function notice(data){
 
 // Gather config from env
 // (default values are needed when not run through `npm start`)
-config = {
-  ws_port: parseInt(config.ws_port || 3400),
-  web_port: parseInt(config.web_port || 8080),
+var config = {
+  ws_port: parseInt(process.env.npm_package_config_ws_port || 3400),
+  web_port: parseInt(process.env.npm_package_config_web_port || 8080),
 };
 
 // HTTP Web Server used to serve the static client files
