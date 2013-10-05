@@ -14,22 +14,25 @@ function notice(data){
   sys.log("\033[0;33m"+data+"\033[0m");
 }
 
-// Fix needed when not run through `npm start`
-process.env.npm_package_config_ws_port = process.env.npm_package_config_ws_port || 3400;
-process.env.npm_package_config_web_port = process.env.npm_package_config_web_port || 8080;
+// Gather config from env
+// (default values are needed when not run through `npm start`)
+config = {
+  ws_port: parseInt(config.ws_port || 3400),
+  web_port: parseInt(config.web_port || 8080),
+};
 
 // HTTP Web Server used to serve the static client files
 var webserver = connect()
   .use(connect.static('www'))
-  .listen(process.env.npm_package_config_web_port);
-sys.log("Server ready to serve client files listening at port " + process.env.npm_package_config_web_port);
+  .listen(config.web_port);
+sys.log("Server ready to serve client files listening at port " + config.web_port);
 
-var server = new ws.Server({port: process.env.npm_package_config_ws_port });
-sys.log("Server ready to execute WebSocket commands listening at port " + process.env.npm_package_config_ws_port);
+var server = new ws.Server({port: config.ws_port });
+sys.log("Server ready to execute WebSocket commands listening at port " + config.ws_port);
 
-server.addListener("connection", function(connection){
+server.on("connection", function(connection){
   notice("connection");
-  connection.addListener("message", function(msgstr){
+  connection.on("message", function(msgstr){
     var buttonToNum = { 'left': 1, 'middle': 2, 'right': 3 };
     var scrollAxisToNum = { 'y': [4,5], 'x': [6,7] };
     var zoomToNum = [4,5];
@@ -77,7 +80,7 @@ server.addListener("connection", function(connection){
       child.stdin.write('keyup Ctrl\n');
     }
   });
-  connection.addListener("close", function(){
+  connection.on("close", function(){
     notice("close");
   });
 });
