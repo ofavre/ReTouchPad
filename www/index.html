@@ -29,14 +29,13 @@
         background-color: blue;
       }
     </style>
-    <script type="text/javascript" src="engine.io.js"></script>
     <script>
       var socket = {
         send: function(msg) {console.log(msg)},
         close: function() {}
       };
       function pleaseDo() {
-        socket = new eio("ws://"+location.hostname+":3400");
+        socket = new WebSocket("ws://"+location.hostname+":3400");
         socket.onopen = function(evt){
           alert("Socket has been opened!\n"+evt);
           registerEvents();
