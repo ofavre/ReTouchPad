@@ -31,7 +31,9 @@
   },
   "dependencies": {
     "websocket-server": "~1.4.04",
-    "connect": "*"
+    "connect": "*",
+    "engine.io": "~0.7.9",
+    "engine.io-client": "~0.7.9"
   },
   "config": {
     "web-port": "8080",
