@@ -35,13 +35,11 @@ var gestureClickL = new Touchpad.Gesture("clickL", function(){
     new Touchpad.TouchEventTypes.MOVE(undefined, 1),
     new Touchpad.TouchEventTypes.DOWN(undefined, 2)
   ]);
-  down.onLeave = function() {
-    if (this.gesture.toState == "up") {
-      socket.send(JSON.stringify({
-        type: "click",
-        button: "left"
-      }));
-    }
+  up.onEnter = function() {
+    socket.send(JSON.stringify({
+      type: "click",
+      button: "left"
+    }));
   };
 });
 
