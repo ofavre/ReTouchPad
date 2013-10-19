@@ -80,7 +80,7 @@ var gestureClickR = new Touchpad.Gesture("clickR", function(){
 });
 
 var gesture2DScroll = new Touchpad.Gesture("scroll", function(){
-  this.onReset = function() {
+  this.onStart = function() {
     this.barycenter = undefined;
   };
   this.setStartState("start");
@@ -183,7 +183,7 @@ var gesture2DScroll = new Touchpad.Gesture("scroll", function(){
 });
 
 var gestureZoom = new Touchpad.Gesture("zoom", function(){
-  this.onReset = function() {
+  this.onStart = function() {
     this.barycenter = undefined;
   };
   this.setStartState("start");

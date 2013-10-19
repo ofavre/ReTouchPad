@@ -21,9 +21,6 @@ Touchpad.TouchEventTypes = {
         this.finished = true;
       return false;
     };
-    this.reset = function() {
-      this.finished = false;
-    };
     this.onStateEnter = function() {this.finished = false;};
     this.onStateLeave = function() {};
   },
@@ -49,9 +46,6 @@ Touchpad.TouchEventTypes = {
         this.finished = true;
       return false;
     };
-    this.reset = function() {
-      this.finished = false;
-    };
     this.onStateEnter = function() {this.finished = false;};
     this.onStateLeave = function() {};
   },
@@ -76,9 +70,6 @@ Touchpad.TouchEventTypes = {
       } else if (this.wouldCancel(dispatcher))
         this.finished = true;
       return false;
-    };
-    this.reset = function() {
-      this.finished = false;
     };
     this.onStateEnter = function() {this.finished = false;};
     this.onStateLeave = function() {};
@@ -109,9 +100,6 @@ Touchpad.TouchEventTypes = {
           return true;
         }
       }
-    };
-    this.reset = function() {
-      this.cancel();
     };
     this.onStateEnter = function() {
       this.timer = setTimeout(this.cb, this.timeout);

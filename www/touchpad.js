@@ -55,10 +55,19 @@ Touchpad = {
         this.states[this.currentState].enter();
     };
 
-    this.reset = function() {
-      this.transitionTo(null);
-      for (var state in this.states) this.states[state].reset();
+    this.start = function() {
+      if (this.currentState != null) return;
       this.transitionTo(this.startState);
+    };
+
+    this.stop = function() {
+      if (this.currentState == null) return;
+      this.transitionTo(null);
+    };
+
+    this.reset = function() {
+      this.stop();
+      this.start();
     };
 
     var setup = new (function(gesture) {
@@ -76,7 +85,6 @@ Touchpad = {
         };
         this.onEnter = undefined;
         this.onLeave = undefined;
-        this.onReset = undefined;
         this.enter = function() {
           for (var i = 0 ; i < this.links.length ; i++)
             this.links[i].event.onStateEnter();
@@ -88,11 +96,6 @@ Touchpad = {
             this.onLeave();
           for (var i = 0 ; i < this.links.length ; i++)
             this.links[i].event.onStateLeave();
-        };
-        this.reset = function() {
-          for (var i = 0 ; i < this.links.length ; i++)
-            this.links[i].event.reset();
-          if (this.onReset) return this.onReset();
         };
       };
 
