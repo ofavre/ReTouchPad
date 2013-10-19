@@ -75,7 +75,6 @@ Touchpad = {
           this.links.push({event: touchEvent, toState: toStateName});
         };
         this.onEnter = undefined;
-        this.onStay = undefined;
         this.onLeave = undefined;
         this.onReset = undefined;
         this.enter = function() {
@@ -83,12 +82,6 @@ Touchpad = {
             this.links[i].event.onStateEnter();
           if (this.onEnter)
             this.onEnter();
-        };
-        this.stay = function() {
-          for (var i = 0 ; i < this.links.length ; i++)
-            this.links[i].event.onStateStay();
-          if (this.onStay)
-            this.onStay();
         };
         this.leave = function() {
           if (this.onLeave)
