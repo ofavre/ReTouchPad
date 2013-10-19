@@ -34,13 +34,19 @@ Touchpad = {
     this.notify = function(dispatcher) {
       if (this.currentState) {
         var s = this.states[this.currentState];
+        var transitioned = false;
         for (var i = 0 ; i < s.links.length ; i++) {
           var e = s.links[i];
           if (e.event.notify(dispatcher)) {
-              console.log(this.name+" "+this.currentState+" -> "+e.toState);
+            console.log(this.name+" "+this.currentState+" -> "+e.toState);
+            transitioned = true;
             this.transitionTo(e.toState);
             break;
           }
+        }
+        if (!transitioned) {
+          console.log(this.name+" "+this.currentState+" -> (stopped)");
+          this.stop();
         }
       }
     };

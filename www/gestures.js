@@ -3,15 +3,7 @@ var gestureMove = new Touchpad.Gesture("move", function(){
   var start = this.addState("start");
   var moving = this.addState("moving");
   start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "moving");
-  start.forbidEvents([
-    new Touchpad.TouchEventTypes.DOWN(undefined, 2)
-  ]);
   moving.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 1), "moving");
-  moving.forbidEvents([
-    new Touchpad.TouchEventTypes.MOVE(undefined, 2),
-    new Touchpad.TouchEventTypes.UP(undefined, 0),
-    new Touchpad.TouchEventTypes.DOWN(undefined, 2)
-  ]);
   moving.onEnter = function() {
     for (id in Touchpad.EventDispatcher.deltaTouches) {
       socket.send(JSON.stringify({
@@ -31,9 +23,7 @@ var gestureClickL = new Touchpad.Gesture("clickL", function(){
   start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down");
   down.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up");
   down.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down.gesture.transitionTo(null);}, 200),
-    new Touchpad.TouchEventTypes.MOVE(undefined, 1),
-    new Touchpad.TouchEventTypes.DOWN(undefined, 2)
+    new Touchpad.TouchEventTypes.TIME(function(){down.gesture.transitionTo(null);}, 200)
   ]);
   up.onEnter = function() {
     socket.send(JSON.stringify({
@@ -54,22 +44,16 @@ var gestureClickR = new Touchpad.Gesture("clickR", function(){
   start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
   down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
   down1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100),
-    new Touchpad.TouchEventTypes.MOVE(undefined, 1),
-    new Touchpad.TouchEventTypes.UP(undefined, 0)
+    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
   ]);
   down2.addLink(new Touchpad.TouchEventTypes.UP(undefined, 1), "up1");
   down2.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up0");
   down2.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down2.gesture.transitionTo(null);}, 200),
-    new Touchpad.TouchEventTypes.MOVE(undefined, 1),
-    new Touchpad.TouchEventTypes.DOWN(undefined, 3)
+    new Touchpad.TouchEventTypes.TIME(function(){down2.gesture.transitionTo(null);}, 200)
   ]);
   up1.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up0");
   up1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100),
-    new Touchpad.TouchEventTypes.MOVE(undefined, 1),
-    new Touchpad.TouchEventTypes.DOWN(undefined, 2)
+    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
   ]);
   up0.onEnter = function() {
     socket.send(JSON.stringify({
@@ -98,32 +82,17 @@ var gesture2DScroll = new Touchpad.Gesture("scroll", function(){
   down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 3), "down3");
   down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 4), "down4");
   down1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100),
-    new Touchpad.TouchEventTypes.MOVE(undefined, 1),
-    new Touchpad.TouchEventTypes.UP(undefined, 0)
+    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
   ]);
   down2.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 2), "moving");
   down2.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 3), "down3");
   down2.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 4), "down4");
-  down2.forbidEvents([
-    new Touchpad.TouchEventTypes.UP(undefined, 1),
-    new Touchpad.TouchEventTypes.UP(undefined, 0)
-  ]);
   down3.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 3), "moving");
   down3.addLink(new Touchpad.TouchEventTypes.UP(undefined, 2), "down2");
   down3.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 4), "down4");
-  down3.forbidEvents([
-    new Touchpad.TouchEventTypes.UP(undefined, 1),
-    new Touchpad.TouchEventTypes.UP(undefined, 0)
-  ]);
   down4.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 4), "moving");
   down4.addLink(new Touchpad.TouchEventTypes.UP(undefined, 3), "down3");
   down4.addLink(new Touchpad.TouchEventTypes.UP(undefined, 2), "down2");
-  down4.forbidEvents([
-    new Touchpad.TouchEventTypes.DOWN(undefined, 5),
-    new Touchpad.TouchEventTypes.UP(undefined, 1),
-    new Touchpad.TouchEventTypes.UP(undefined, 0)
-  ]);
   down2.onEnter = down3.onEnter = down4.onEnter = function() {
     this.gesture.accummulation = {dx: 0, dy: 0};
     this.gesture.barycenter = ",";
@@ -139,10 +108,6 @@ var gesture2DScroll = new Touchpad.Gesture("scroll", function(){
   moving.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 4), "down4");
   moving.addLink(new Touchpad.TouchEventTypes.UP(undefined, 3), "down3");
   moving.addLink(new Touchpad.TouchEventTypes.UP(undefined, 2), "down2");
-  moving.forbidEvents([
-    new Touchpad.TouchEventTypes.UP(undefined, 1),
-    new Touchpad.TouchEventTypes.UP(undefined, 0)
-  ]);
   moving.onEnter = function() {
     var type = undefined;
     var step = 0;
@@ -195,17 +160,9 @@ var gestureZoom = new Touchpad.Gesture("zoom", function(){
   start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
   down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
   down1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100),
-    new Touchpad.TouchEventTypes.DOWN(undefined, 3),
-    new Touchpad.TouchEventTypes.MOVE(undefined, 1),
-    new Touchpad.TouchEventTypes.UP(undefined, 0)
+    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
   ]);
   down2.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 2), "moving");
-  down2.forbidEvents([
-    new Touchpad.TouchEventTypes.DOWN(undefined, 3),
-    new Touchpad.TouchEventTypes.UP(undefined, 1),
-    new Touchpad.TouchEventTypes.UP(undefined, 0)
-  ]);
   down2.onEnter = function() {
     this.gesture.accummulation = {dstdXY: 0};
     this.gesture.barycenter = ",";
@@ -215,11 +172,6 @@ var gestureZoom = new Touchpad.Gesture("zoom", function(){
       console.log("barycenter key = "+this.gesture.barycenter);
   };
   moving.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 2), "moving");
-  moving.forbidEvents([
-    new Touchpad.TouchEventTypes.DOWN(undefined, 3),
-    new Touchpad.TouchEventTypes.UP(undefined, 1),
-    new Touchpad.TouchEventTypes.UP(undefined, 0)
-  ]);
   moving.onEnter = function() {
     var b = Touchpad.EventDispatcher.barycenters._list[this.gesture.barycenter];
     this.gesture.accummulation.dstdXY += b.dstdXY;
