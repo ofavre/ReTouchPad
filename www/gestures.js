@@ -23,7 +23,7 @@ var gestureClickL = new Touchpad.Gesture("clickL", function(){
   start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down");
   down.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up");
   down.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down.gesture.transitionTo(null, null);}, 200)
+    new Touchpad.TouchEventTypes.TIME(function(){down.gesture.transitionTo(null);}, 200)
   ]);
   up.onEnter = function() {
     socket.send(JSON.stringify({
@@ -43,15 +43,15 @@ var gestureClickR = new Touchpad.Gesture("clickR", function(){
   start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down1");
   down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
   down1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null, null);}, 100)
+    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
   ]);
   down2.addLink(new Touchpad.TouchEventTypes.UP(undefined, 1), "up1");
   down2.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down2.gesture.transitionTo(null, null);}, 200)
+    new Touchpad.TouchEventTypes.TIME(function(){down2.gesture.transitionTo(null);}, 200)
   ]);
   up1.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up0");
   up1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null, null);}, 100)
+    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
   ]);
   up0.onEnter = function() {
     socket.send(JSON.stringify({
@@ -75,7 +75,7 @@ var gesture2DScroll = new Touchpad.Gesture("scroll", function(){
   start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down1");
   down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
   down1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null, null);}, 100)
+    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
   ]);
   down2.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 2), "moving");
   down2.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 3), "down3");
@@ -108,7 +108,7 @@ var gesture2DScroll = new Touchpad.Gesture("scroll", function(){
       case 4: type = "desktopchange"; step = 60; break;
     }
     if (type == undefined) {
-      this.gesture.transitionTo(null, null);
+      this.gesture.transitionTo(null);
       return;
     }
     var b = Touchpad.EventDispatcher.barycenters._list[this.gesture.barycenter];
@@ -134,7 +134,7 @@ var gesture2DScroll = new Touchpad.Gesture("scroll", function(){
       }));
     }
     if (type == "desktopchange" && (dx != 0 || dy != 0))
-      this.gesture.transitionTo(null, null);
+      this.gesture.transitionTo(null);
   };
 });
 
@@ -150,7 +150,7 @@ var gestureZoom = new Touchpad.Gesture("zoom", function(){
   start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down1");
   down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
   down1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null, null);}, 100)
+    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
   ]);
   down2.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 2), "moving");
   down2.onEnter = function() {

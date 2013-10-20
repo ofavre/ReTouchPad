@@ -55,6 +55,7 @@ Touchpad = {
     };
 
     this.transitionTo = function(name, event) {
+      event = event || Touchpad.TouchEventTypes.NULL;
       this.fromState = this.currentState;
       this.toState = (name && name in this.states) ? name : null;
       this.firedEvent = event;
@@ -67,12 +68,12 @@ Touchpad = {
 
     this.start = function() {
       if (this.currentState != null) return;
-      this.transitionTo(this.startState, null);
+      this.transitionTo(this.startState);
     };
 
     this.stop = function() {
       if (this.currentState == null) return;
-      this.transitionTo(null, null);
+      this.transitionTo(null);
     };
 
     this.reset = function() {

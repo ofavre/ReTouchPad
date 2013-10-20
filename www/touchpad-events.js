@@ -1,5 +1,9 @@
 Touchpad.TouchEventTypes = {
 
+  NULL: {
+    type: null
+  },
+
   DOWN: function(cb, totalFingerCount) {
     this.type = "DOWN";
     this.finished = false;
