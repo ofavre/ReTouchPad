@@ -23,7 +23,7 @@ var gestureClickL = new Touchpad.Gesture("clickL", function(){
   start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down");
   down.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up");
   down.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down.gesture.transitionTo(null);}, 200)
+    new Touchpad.TouchEventTypes.TIME(function(){down.gesture.transitionTo(null, null);}, 200)
   ]);
   up.onEnter = function() {
     socket.send(JSON.stringify({
@@ -150,7 +150,7 @@ var gestureZoom = new Touchpad.Gesture("zoom", function(){
   start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down1");
   down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
   down1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
+    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null, null);}, 100)
   ]);
   down2.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 2), "moving");
   down2.onEnter = function() {
