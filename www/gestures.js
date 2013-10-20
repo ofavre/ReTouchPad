@@ -18,46 +18,46 @@ var gestureMove = new Touchpad.Gesture("move", function(){
 var gestureClickL = new Touchpad.Gesture("clickL", function(){
   this.setStartState("start");
   var start = this.addState("start");
-  var down = this.addState("down");
-  var up = this.addState("up");
-  start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down");
-  down.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up");
-  down.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down.gesture.transitionTo(null);}, 200)
+  start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "start");
+  start.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "start");
+  start.forbidEvents([
+    new Touchpad.TouchEventTypes.TIME(function(){start.gesture.transitionTo(null);}, 200)
   ]);
-  up.onEnter = function() {
-    socket.send(JSON.stringify({
-      type: "click",
-      button: "left"
-    }));
+  start.onEnter = function() {
+    if (this.gesture.firedEvent.type == "UP") {
+      socket.send(JSON.stringify({
+        type: "click",
+        button: "left"
+      }));
+    }
   };
 });
 
 var gestureClickR = new Touchpad.Gesture("clickR", function(){
   this.setStartState("start");
   var start = this.addState("start");
-  var down1 = this.addState("down1");
   var down2 = this.addState("down2");
-  var up1 = this.addState("up1");
   var up0 = this.addState("up0");
-  start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "down1");
-  down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
-  down1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
+  start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "start");
+  start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
+  start.forbidEvents([
+    new Touchpad.TouchEventTypes.TIME(function(){start.gesture.transitionTo(null);}, 100)
   ]);
-  down2.addLink(new Touchpad.TouchEventTypes.UP(undefined, 1), "up1");
+  down2.addLink(new Touchpad.TouchEventTypes.UP(undefined, 1), "up0");
   down2.forbidEvents([
     new Touchpad.TouchEventTypes.TIME(function(){down2.gesture.transitionTo(null);}, 200)
   ]);
-  up1.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up0");
-  up1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
+  up0.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up0");
+  up0.forbidEvents([
+    new Touchpad.TouchEventTypes.TIME(function(){up0.gesture.transitionTo(null);}, 100)
   ]);
   up0.onEnter = function() {
-    socket.send(JSON.stringify({
-      type: "click",
-      button: "right"
-    }));
+    if (this.gesture.firedEvent.type == "UP" && Touchpad.EventDispatcher.touches.count == 0) {
+      socket.send(JSON.stringify({
+        type: "click",
+        button: "right"
+      }));
+    }
   };
 });
 

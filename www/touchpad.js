@@ -8,19 +8,22 @@ Touchpad = {
 
   GestureManager: {
 
+    restartEvents: true,
+
     gestures: [],
 
     registerGesture: function(gesture) {
       this.gestures.push(gesture);
-      gesture.reset();
     },
 
     notify: function(dispatcher) {
+      if (this.restartEvents)
+        for (var i = 0 ; i < this.gestures.length ; i++)
+          if (this.gestures[i].currentState == null)
+            this.gestures[i].start();
       for (var i = 0 ; i < this.gestures.length ; i++)
         this.gestures[i].notify(dispatcher);
-      if (dispatcher.touches.count == 0)
-        for (var i = 0 ; i < this.gestures.length ; i++)
-          this.gestures[i].reset();
+      this.restartEvents = dispatcher.touches.count == 0;
     },
 
   },
