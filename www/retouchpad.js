@@ -1,7 +1,8 @@
-var socket = {
+var NotConnectedSocket = {
   send: function(msg) {console.log(msg)},
   close: function() {}
 };
+var socket = NotConnectedSocket;
 
 function pleaseDo() {
   socket = new WebSocket("ws://"+location.hostname+":3400");
@@ -25,10 +26,9 @@ function pleaseDo() {
 
 }
 function pleaseClose() {
-  if (socket == undefined) return;
   registerEvents(false);
   socket.close();
-  socket = undefined;
+  socket = NotConnectedSocket;
 }
 
 function registerEvents(unregister) {
