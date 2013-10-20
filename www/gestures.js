@@ -1,16 +1,16 @@
 var gestureMove = new Touchpad.Gesture("move", function(){
   this.setStartState("start");
   var start = this.addState("start");
-  var moving = this.addState("moving");
-  start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "moving");
-  moving.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 1), "moving");
-  moving.onEnter = function() {
+  start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 1), "start");
+  start.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 1), "start");
+  start.onEnter = function() {
     for (id in Touchpad.EventDispatcher.deltaTouches) {
       socket.send(JSON.stringify({
         type: "move",
         relx: Touchpad.EventDispatcher.deltaTouches[id].x,
         rely: Touchpad.EventDispatcher.deltaTouches[id].y,
       }));
+      break;
     }
   };
 });
