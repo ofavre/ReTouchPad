@@ -44,16 +44,16 @@ var gestureClickR = new Touchpad.Gesture("clickR", function(){
   start.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
   down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 2), "down2");
   down1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
+    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null, null);}, 100)
   ]);
   down2.addLink(new Touchpad.TouchEventTypes.UP(undefined, 1), "up1");
   down2.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up0");
   down2.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down2.gesture.transitionTo(null);}, 200)
+    new Touchpad.TouchEventTypes.TIME(function(){down2.gesture.transitionTo(null, null);}, 200)
   ]);
   up1.addLink(new Touchpad.TouchEventTypes.UP(undefined, 0), "up0");
   up1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
+    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null, null);}, 100)
   ]);
   up0.onEnter = function() {
     socket.send(JSON.stringify({
@@ -82,7 +82,7 @@ var gesture2DScroll = new Touchpad.Gesture("scroll", function(){
   down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 3), "down3");
   down1.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 4), "down4");
   down1.forbidEvents([
-    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null);}, 100)
+    new Touchpad.TouchEventTypes.TIME(function(){down1.gesture.transitionTo(null, null);}, 100)
   ]);
   down2.addLink(new Touchpad.TouchEventTypes.MOVE(undefined, 2), "moving");
   down2.addLink(new Touchpad.TouchEventTypes.DOWN(undefined, 3), "down3");
@@ -117,7 +117,7 @@ var gesture2DScroll = new Touchpad.Gesture("scroll", function(){
       case 4: type = "desktopchange"; step = 60; break;
     }
     if (type == undefined) {
-      this.gesture.transitionTo(null);
+      this.gesture.transitionTo(null, null);
       return;
     }
     var b = Touchpad.EventDispatcher.barycenters._list[this.gesture.barycenter];
@@ -143,7 +143,7 @@ var gesture2DScroll = new Touchpad.Gesture("scroll", function(){
       }));
     }
     if (type == "desktopchange" && (dx != 0 || dy != 0))
-      this.gesture.transitionTo(null);
+      this.gesture.transitionTo(null, null);
   };
 });
 

@@ -30,6 +30,9 @@ Touchpad = {
     this.states = {};
     this.startState = null;
     this.currentState = null;
+    this.fromState = null;
+    this.toState = null;
+    this.firedEvent = null;
 
     this.notify = function(dispatcher) {
       if (this.currentState) {
@@ -40,7 +43,7 @@ Touchpad = {
           if (e.event.notify(dispatcher)) {
             console.log(this.name+" "+this.currentState+" -> "+e.toState);
             transitioned = true;
-            this.transitionTo(e.toState);
+            this.transitionTo(e.toState, e.event);
             break;
           }
         }
@@ -51,9 +54,10 @@ Touchpad = {
       }
     };
 
-    this.transitionTo = function(name) {
+    this.transitionTo = function(name, event) {
       this.fromState = this.currentState;
       this.toState = (name && name in this.states) ? name : null;
+      this.firedEvent = event;
       if (this.currentState)
         this.states[this.currentState].leave();
       this.currentState = this.toState;
@@ -63,12 +67,12 @@ Touchpad = {
 
     this.start = function() {
       if (this.currentState != null) return;
-      this.transitionTo(this.startState);
+      this.transitionTo(this.startState, null);
     };
 
     this.stop = function() {
       if (this.currentState == null) return;
-      this.transitionTo(null);
+      this.transitionTo(null, null);
     };
 
     this.reset = function() {
