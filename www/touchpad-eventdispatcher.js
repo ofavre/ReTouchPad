@@ -118,16 +118,22 @@ Touchpad.EventDispatcher = {
   },
 
   receiveEvent: function(evt) {
-    this.lastEvent = evt;
-    this.lastEventTime = new Date().getTime();
     this.deltaTouches = {};
     if (evt.type == "touchstart") {
-      for (var i = 0 ; i < evt.changedTouches.length ; i++) {
-        var t = new Touchpad.Touch(evt.changedTouches[i]);
-        this.touches[evt.changedTouches[i].identifier] = t;
+      if (evt.changedTouches.length > 1) {
+        for (var i = 0 ; i < evt.changedTouches.length ; i++) {
+          this.receiveEvent({
+            type: "touchstart",
+            changedTouches: [evt.changedTouches[i]]
+          });
+        }
+        return;
+      } else if (evt.changedTouches.length == 1) {
+        var t = new Touchpad.Touch(evt.changedTouches[0]);
+        this.touches[evt.changedTouches[0].identifier] = t;
         this.barycenters.newTouch(t);
-      }
-      this.touches.count += evt.changedTouches.length;
+        this.touches.count++;
+      } else return;
     } else if (evt.type == "touchmove") {
       for (var i = 0 ; i < evt.changedTouches.length ; i++) {
         var t = evt.changedTouches[i];
@@ -143,13 +149,23 @@ Touchpad.EventDispatcher = {
       }
       this.barycenters.updateWithDeltaTouches(this.deltaTouches);
     } else if (evt.type == "touchend") {
-      for (var i = 0 ; i < evt.changedTouches.length ; i++) {
-        var id = evt.changedTouches[i].identifier;
+      if (evt.changedTouches.length > 1) {
+        for (var i = 0 ; i < evt.changedTouches.length ; i++) {
+          this.receiveEvent({
+            type: "touchend",
+            changedTouches: [evt.changedTouches[i]]
+          });
+        }
+        return;
+      } else if (evt.changedTouches.length == 1) {
+        var id = evt.changedTouches[0].identifier;
         delete this.touches[id];
         this.barycenters.deleteWithId(id);
-      }
-      this.touches.count -= evt.changedTouches.length;
+        this.touches.count--;
+      } else return;
     }
+    this.lastEvent = evt;
+    this.lastEventTime = new Date().getTime();
     socket.send(JSON.stringify({type:"log",value:{
       type: evt.type,
       changedTouches: (function(ct){
