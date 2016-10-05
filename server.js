@@ -2,6 +2,7 @@
 var sys = require("sys");
 var ws = require("ws");
 var connect = require("connect");
+var serveStatic = require("serve-static");
 var exec = require("child_process").exec;
 
 function error(data){
@@ -23,7 +24,7 @@ var config = {
 
 // HTTP Web Server used to serve the static client files
 var webserver = connect()
-  .use(connect.static('www'))
+  .use(serveStatic('www'))
   .listen(config.web_port);
 sys.log("Server ready to serve client files listening at port " + config.web_port);
 

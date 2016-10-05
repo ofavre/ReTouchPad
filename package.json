@@ -30,8 +30,9 @@
     "node": ">=0.2.0-0"
   },
   "dependencies": {
-    "connect": "*",
-    "ws": "~0.4.31"
+    "connect": "^3.5.0",
+    "serve-static": "^1.11.1",
+    "ws": "^1.1.1"
   },
   "config": {
     "web-port": "8080",
